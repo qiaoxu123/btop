@@ -290,10 +290,21 @@ namespace Tools {
 		return ltrim(rtrim(str, t_str), t_str);
 	}
 
+	//* Build a vector from a range. Stands in for std::ranges::to<std::vector<T>>(),
+	//* which libstdc++ only gained in GCC 14 while this project requires C++23.
+	template <typename T, std::ranges::range R>
+	constexpr auto to_vector(R&& r) {
+		std::vector<T> out;
+		for (auto&& element : r) out.emplace_back(element);
+		return out;
+	}
+
 	//* Split <string> at all occurrences of <delim> and return as vector of strings
 	constexpr auto ssplit(std::string_view str, char delim = ' ') {
-		return str | std::views::split(delim) | std::views::filter([](auto&& range) { return !std::ranges::empty(range); }) |
-			   std::ranges::to<std::vector<std::string>>();
+		std::vector<std::string> out;
+		for (auto&& part : str | std::views::split(delim) | std::views::filter([](auto&& range) { return !std::ranges::empty(range); }))
+			out.emplace_back(part.begin(), part.end());
+		return out;
 	}
 
 	//* Put current thread to sleep for <ms> milliseconds
